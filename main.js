@@ -158,15 +158,6 @@ const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.screenSpacePanning = true;
 
-//change Render Type
-controls.addEventListener('start', () => { 
-	switchPipelinejiaohu('RayTracing')
-});
-
-controls.addEventListener('end', () => {
-	switchPipelinejiaohu('RealTime')
-});
-
 // Transform control
 const transformControl = new TransformControls(camera, renderer.domElement);
 const mouse = new THREE.Vector2();
@@ -509,6 +500,15 @@ async function loadAssets() {
 
 	const gltfInfo = await loadDracoGLTF(gltfModelPath);
 	updateGLTFScene(gltfInfo);
+	
+	//change Render Type
+	controls.addEventListener('start', () => { 
+		switchPipelinejiaohu('RayTracing')
+	});
+
+	controls.addEventListener('end', () => {
+		switchPipelinejiaohu('RealTime')
+	});
 }
 
 function initRayTracingPipeline() {
