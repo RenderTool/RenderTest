@@ -3,6 +3,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	publicDir: 'assets',
 	server: {
-		port: 5555,
+		port: 8088,
 	}
 });

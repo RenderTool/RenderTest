@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.skypack.dev/three';
+import * as THREE from 'three';
 // Debug
 import Stats from './stats.module';
 import { GUI } from './dat.gui.module';

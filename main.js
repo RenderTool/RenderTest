@@ -1,4 +1,4 @@
-import * as THREE from 'https://cdn.skypack.dev/three';
+import * as THREE from 'three';
 import { OrbitControls } from './common/OrbitControls';
 import { TransformControls } from './common/TransformControls';
 import { RGBELoader } from './common/RGBELoader';
