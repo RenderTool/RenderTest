@@ -38,7 +38,7 @@ let realTimeRAFID = null;
 let materialCacheMap = new Map();
 let needSwitchFlag = false;
 
-const envMapIntensity = 2;
+const envMapIntensity = 1.0;
 // Init RayTracing Pipeline
 const renderer = new LGLTracerRenderer({
 	antialias: true,
@@ -588,6 +588,8 @@ function resize() {
 		if (realTimeRenderer) realTimeRenderer.setSize(width, height);
 		camera.aspect = width / height;
 		camera.updateProjectionMatrix();
+		offScreenCanvas.width = window.innerWidth;
+		offScreenCanvas.height = window.innerHeight;
 	}
 }
 
