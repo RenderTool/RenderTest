@@ -162,7 +162,7 @@ canvas {
 .copyRight {
 	position: absolute;
 	bottom: 1%;
-	right: 1%;
+	left: 1%;
 	/* transform: translate(-50%,-50%); */
 	/* text-transform: uppercase; */
 	font-size: 1.25vw;

@@ -3,6 +3,7 @@ import { OrbitControls } from './common/OrbitControls';
 import { TransformControls } from './common/TransformControls';
 import { RGBELoader } from './common/RGBELoader';
 import { LGLTracerRenderer, DisneyMaterial } from './common/lglTracer.es';
+import { GUI } from './common/dat.gui.module';
 // Assets
 import { makeCommonGUI } from './common/makeCommonGUI';
 import {
@@ -17,8 +18,6 @@ import {
 import { SimpleDropzone } from 'simple-dropzone';
 
 const lights = [];
-const envMapPath = '/002.hdr';
-const gltfModelPath = '/FantasyBook/model1.glb';
 let curModel = null;
 let curEnvLight = null;
 let loadingAssetFlag = false;
@@ -42,7 +41,8 @@ let needSwitchFlag = false;
 const envMapIntensity = 2;
 // Init RayTracing Pipeline
 const renderer = new LGLTracerRenderer({
-	antialias: true
+	antialias: true,
+	preserveDrawingBuffer: true,
 });
 // Init RendererSetting
 let initRendererSetting = {
@@ -70,12 +70,7 @@ renderer.tileSlicesNum = initRendererSetting.tileSlicesNum;
 renderer.enableTemporalDenoise = false;
 renderer.enableDenoise = false;
 document.body.appendChild(renderer.domElement);
-renderer.fullSampleCallback = () => {
-	if (needSwitchFlag) {
-		needSwitchFlag = false;
-		switchPipelineImmedia();
-	}
-}
+	
 
 // Debug
 const debug = true;
@@ -121,6 +116,7 @@ const stats = initStats(debug);
 const cameraInfoEle = initCameraDebugInfo(debug);
 let sampleCountRec = null;
 let sampleCountCur = null;
+
 function initDenoiseSceneParam() {
 	renderer.setDenoiseColorFactor(0.05);
 	renderer.setDenoisePositionFactor(0.01);
@@ -142,8 +138,116 @@ realTimeRenderer.setPixelRatio(1);
 realTimeRenderer.setClearAlpha(0);
 
 // GUI
+//add env
+	let shot = false;
+	const offScreenCanvas = document.createElement('canvas');
+	const offScreenCtx = offScreenCanvas.getContext('2d');
+	offScreenCanvas.width = window.innerWidth;
+	offScreenCanvas.height = window.innerHeight;
+
+function downloadSceneImage(name, fileFormat = 'jpeg') {
+		
+		let imgData = offScreenCanvas.toDataURL(`image/${fileFormat}`);
+		try {
+			imgData.replace(`image/${fileFormat}`, 'image/octet-stream');
+			let link = document.createElement('a');
+			link.style.display = 'none';
+			document.body.appendChild(link);
+			link.href = imgData;
+			link.download = `${name}.${fileFormat}`;
+			link.click();
+		} catch (error) {
+			console.error(error);
+			alert(error);
+		}
+	}
+renderer.fullSampleCallback = ()=> {
+		
+		if (shot == !0) {
+			offScreenCtx.drawImage(renderer.domElement, 0, 0);
+			downloadSceneImage("LGLTracer", 'png');
+			shot = !1;
+		}
+	};
+	$(".copyRight").click(function(){
+		shot= true;
+	});
+
+const envMaps = {
+	'hdr1':'./hdr/001.hdr',
+	'hdr2': './hdr/002.hdr',
+	'hdr3': './hdr/003.hdr',
+	'hdr4': './hdr/004.hdr',
+};
+const Mods = {
+	'models0':'./models/sp.gltf',
+	'models1':'./models/1454383.glb',
+	'models2': './models/1454455.glb',
+	'models3': './models/1454537.glb',
+	'models4': './models/1465501.glb',
+	'models5': './models/1486655.glb',
+	'models6': './models/1454551.glb',
+	'models7': './models/1472590.glb',
+	
+};
+
+const gui = new GUI({
+	closeOnTop: true
+});
+const params = {
+	Mod:Mods['models7'],
+	envMap: envMaps[ 'hdr2' ],//envmap
+	saveScreenShot: () => {
+	shot= true;
+	}
+}
+const settingFolder = gui.addFolder('设置');
+settingFolder.add( params, 'envMap', envMaps ).name( '环境光' ).onChange( LoadEnv );
+settingFolder.add( params, 'Mod', Mods ).name( '模型' ).onChange( LoadGLTF );
+settingFolder.add(params, 'saveScreenShot').name('截图');
+async function LoadEnv() {
+
+	const rgbeLoader = new RGBELoader().setDataType(THREE.FloatType);
+	const envMap = await new Promise(resolve => {
+		rgbeLoader.load(params.envMap, resolve);
+	});
+	updateEnvLight(envMap);
+	renderer.updateEnvLight();
+	renderer.needsUpdate = true;
+}
+async function LoadGLTF() {
+	toggleLoadingTipsArea(true);
+	const gltfInfo = await loadDracoGLTF(params.Mod);
+	updateGLTFScene(gltfInfo);
+	transformControl.detach();
+	scene.remove(transformControl);
+	updateGLTFScene(gltfInfo);
+	processSceneMaterial();
+	// New scene, reset all mark
+	isRayTracingPipelineInited = false;
+	isRealTimePipelineInited = false;
+	isRayTracingPipelineNeedUpdateEnv = false;
+	isRayTracingPipelineNeedUpdateTransform = false;
+	isRayTracingPipelineNeedUpdateMaterial = false;
+	if (curPipeline === 'RayTracing') {
+		switchMaterial('RayTracing');
+		renderer.buildScene(scene, camera).then(() => {
+		loadingAssetFlag = false;
+		isRayTracingPipelineInited = true;
+		toggleLoadingTipsArea(false);
+	});
+	} else {
+	// Reset
+		switchMaterial('RealTime');
+		realTimeGUI.hide();
+		isRealTimePipelineInited = true;
+		loadingAssetFlag = false;
+		toggleLoadingTipsArea(false);
+			}
+}
+
 realTimeGUI = initNewGUI();
-realTimeGUI.add({ envIntensity: envMapIntensity }, 'envIntensity', 0, 5, 0.5).onChange(value => {
+realTimeGUI.add({ envIntensity: envMapIntensity }, 'envIntensity', 0, 10, 0.5).onChange(value => {
 	realTimeRenderer.toneMappingExposure = value;
 });
 let materialFolder = realTimeGUI.addFolder('Material');
@@ -494,11 +598,11 @@ resize();
 async function loadAssets() {
 	const rgbeLoader = new RGBELoader().setDataType(THREE.FloatType);
 	const envMap = await new Promise(resolve => {
-		rgbeLoader.load(envMapPath, resolve);
+		rgbeLoader.load( envMaps['hdr2'], resolve);
 	});
 	updateEnvLight(envMap);
 
-	const gltfInfo = await loadDracoGLTF(gltfModelPath);
+	const gltfInfo = await loadDracoGLTF(Mods['models7']);
 	updateGLTFScene(gltfInfo);
 	
 	//change Render Type
@@ -689,5 +793,4 @@ async function init() {
 	initEvent();
 	curPipelineTextEle.innerText = curPipeline;
 }
-
 init();

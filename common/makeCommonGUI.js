@@ -3,25 +3,6 @@ import * as THREE from 'three';
 import Stats from './stats.module';
 import { GUI } from './dat.gui.module';
 import { toneMappingList, threeToneMappingStrMap } from './const/guiConfig';
-
-const offScreenCanvas = document.createElement('canvas');
-const offScreenCtx = offScreenCanvas.getContext('2d');
-function downloadSceneImage(name, fileFormat = 'jpeg') {
-	let imgData = offScreenCanvas.toDataURL(`image/${fileFormat}`);
-	try {
-		imgData.replace(`image/${fileFormat}`, 'image/octet-stream');
-		let link = document.createElement('a');
-		link.style.display = 'none';
-		document.body.appendChild(link);
-		link.href = imgData;
-		link.download = `${name}.${fileFormat}`;
-		link.click();
-	} catch (error) {
-		console.error(error);
-		alert(error);
-	}
-}
-
 export function makeCommonGUI() {
 	let showSampleCount = false;
 	let showStats = false;
@@ -57,7 +38,6 @@ export function makeCommonGUI() {
 		});
 		return gui;
 	}
-
 	function initGUI(debug, renderer) {
 		if (!debug) return;
 		const gui = new GUI({
@@ -88,19 +68,6 @@ export function makeCommonGUI() {
 			demodulateAlbedo: false,
 			sampleCount: showSampleCount,
 			stats: showStats,
-			saveScreenShot: () => {
-				const width = renderer.size.x;
-				const height = renderer.size.y;
-				offScreenCanvas.width = width;
-				offScreenCanvas.height = height;
-				let finished = false;
-				renderer.fullSampleCallback = () => {
-					if (finished) return;
-					offScreenCtx.drawImage(renderer.domElement, 0, 0);
-					downloadSceneImage(`LGLTracer`, 'png');
-					finished = true;
-				};
-			},
 			deleteAllGUI: () => {
 				gui.domElement.parentElement.remove(gui.domElement);
 			},
@@ -114,6 +81,7 @@ export function makeCommonGUI() {
 				renderer.updateMeshMaterial();
 			}
 		};
+
 		const settingFolder = gui.addFolder('Setting');
 		settingFolder
 			.add(params, 'bounces', 2, 8)
@@ -199,7 +167,6 @@ export function makeCommonGUI() {
 				statsEle.style.display = 'block';
 			}
 		});
-		guiFolder.add(params, 'saveScreenShot');
 		guiFolder.add(params, 'deleteAllGUI');
 		const denoiseFolder = gui.addFolder('Denoise(SVGF)');
 		denoiseFolder
