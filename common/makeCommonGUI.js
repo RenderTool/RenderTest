@@ -36,6 +36,7 @@ export function makeCommonGUI() {
 		const gui = new GUI({
 			closeOnTop: true
 		});
+		gui.domElement.parentElement.remove(gui.domElement);
 		return gui;
 	}
 	function initGUI(debug, renderer) {

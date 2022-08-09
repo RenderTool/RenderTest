@@ -4,5 +4,5 @@ export default defineConfig({
 	publicDir: 'assets',
 	server: {
 		port: 8088,
-	}
+	},
 });

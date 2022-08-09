@@ -9,8 +9,12 @@
   },
   "author": "todaylg",
   "dependencies": {
+    "daisyui": "^2.22.0",
     "simple-dropzone": "^0.8.1",
     "three": "^0.142.0",
     "vite": "^3.0.3"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.1.8"
   }
 }
